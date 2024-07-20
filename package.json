@@ -5,7 +5,7 @@
   "scripts": {
     "start": "bin/hubot run"
   },
-  "author": "",
+  "author": "Toshiyuki Iizawa",
   "keywords": [
     "hubot",
     "direct",
@@ -14,8 +14,7 @@
   ],
   "description": "",
   "engines": {
-    "node": ">= 16",
-    "npm": ">= 8.3.0"
+    "node": "16.x"
   },
   "dependencies": {
     "forever": "^4.0.0",
