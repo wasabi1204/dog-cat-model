@@ -8,19 +8,25 @@ const app = new Clarifai.App({
 module.exports = (robot) => {
     robot.respond(/(.+)$/, async (res) => {
         const message = res.message;
-        
+
+        // デバッグ用にメッセージ全体をログ出力
+        console.log('Received message:', message);
+
         if (message.attachments && message.attachments.length > 0 && message.attachments[0].type === 'image') {
             const imageUrl = message.attachments[0].url;
-            
+
+            // デバッグ用に画像URLをログ出力
+            console.log('Image URL:', imageUrl);
+
             try {
                 // 画像のダウンロード処理
                 const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
                 const imageBytes = Buffer.from(response.data, 'binary').toString('base64');
-                
+
                 // 画像をClarifai APIで解析
                 const clarifaiResponse = await app.models.predict("dog-catmodel", { base64: imageBytes });
                 const concepts = clarifaiResponse.outputs[0].data.concepts;
-                
+
                 if (concepts.length > 0) {
                     const topConcept = concepts[0].name;
                     res.send(`これは${topConcept}の画像ですね。`);
@@ -28,7 +34,7 @@ module.exports = (robot) => {
                     res.send('画像の内容を認識できませんでした。');
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Error during image processing:', err);
                 res.send('画像の解析に失敗しました。');
             }
         } else {
