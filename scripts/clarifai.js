@@ -10,46 +10,50 @@ metadata.set("authorization", "Key " + api_key);
 module.exports = (robot) => {
     const onfile = (res, file) => {
         res.download(file, (path) => {
-            try {
-                // 画像ファイルをBase64形式で読み込み
-                const imageBytes = fs.readFileSync(path, { encoding: "base64" });
-
-                stub.PostModelOutputs(
-                    {
-                        model_id: "dog-catmodel",  // 使用するモデルID
-                        inputs: [{ data: { image: { base64: imageBytes } } }]
-                    },
-                    metadata,
-                    (err, response) => {
-                        if (err) {
-                            res.send("Error: " + err);  // エラー時のレスポンス
-                            return;
-                        }
-
-                        if (response.status.code !== 10000) {
-                            res.send(`Received failed status: ${response.status.description} \nDetails: ${response.status.details} \nCode: ${response.status.code}`);
-                            return;
-                        }
-
-                        // 結果の処理
-                        let result = "";
-                        if (response.outputs && response.outputs[0] && response.outputs[0].data && response.outputs[0].data.concepts) {
-                            for (const c of response.outputs[0].data.concepts) {
-                                result += `${c.name}: ${c.value}\n`;
-                            }
-                        } else {
-                            result = "No concepts found in response.";
-                        }
-                        res.send(result);
+            const imageBytes = fs.readFileSync(path, { encoding: "base64" }); // ファイルを読み込んでbase64エンコード
+            stub.PostModelOutputs( // Clarifai APIの呼び出し
+                {
+                    model_id: "dog-catmodel",  // 画像認識モデルのIDを指定
+                    inputs: [{ data: { image: { base64: imageBytes } } }]  // base64エンコードした画像データを入力として設定
+                },
+                metadata,
+                (err, response) => {  // コールバック関数
+                    if (err) {
+                        res.send("Error: " + err);  // 何かエラーがあればエラーメッセージを返す
+                        return;
                     }
-                );
-            } catch (error) {
-                res.send("Error reading file: " + error.message);
-            }
+
+                    if (response.status.code !== 10000) {  // ステータスコードが10000以外の場合はエラーメッセージを返す
+                        res.send("Received failed status: " + response.status.description + "\n" + response.status.details + "\n" + response.status.code);
+                        return;
+                    }
+
+                    // 判別結果を取得
+                    const concepts = response.outputs[0].data.concepts;
+                    const cat = concepts.find(c => c.name === 'cat');
+                    const dog = concepts.find(c => c.name === 'dog');
+
+                    let result = "わからない";  // デフォルトの結果は「わからない」
+
+                    if (cat && dog) {
+                        if (cat.value > dog.value) {
+                            result = "猫";
+                        } else if (dog.value > cat.value) {
+                            result = "犬";
+                        }
+                    } else if (cat) {
+                        result = "猫";
+                    } else if (dog) {
+                        result = "犬";
+                    }
+
+                    res.send(result);  // 判別結果をレスポンスとして返す
+                }
+            );
         });
     };
 
-    robot.respond('file', (res) => {
-        onfile(res, res.json);  // `res.json`がファイルパスであることを確認
+    robot.respond('file', (res) => {  // ファイルがアップロードされたときの処理
+        onfile(res, res.json);
     });
 };
