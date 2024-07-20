@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 
 const stub = ClarifaiStub.grpc();
-
 const metadata = new grpc.Metadata();
 const api_key = "5654b2812fd44f61a85e7543a89faa27";
 metadata.set("authorization", "Key " + api_key);
@@ -29,13 +28,13 @@ module.exports = (robot) => {
             console.log("File path:", path); // デバッグ用
             try {
                 const imageBytes = fs.readFileSync(path, { encoding: "base64" }); // ファイルを読み込んでbase64エンコード
-                stub.PostModelOutputs( // Clarifai APIの呼び出し
+                stub.PostModelOutputs(
                     {
                         model_id: "dog-catmodel",  // 画像認識モデルのIDを指定
                         inputs: [{ data: { image: { base64: imageBytes } } }]  // base64エンコードした画像データを入力として設定
                     },
                     metadata,
-                    (err, response) => {  // コールバック関数
+                    (err, response) => {
                         if (err) {
                             console.error("Clarifai API Error:", err); // デバッグ用
                             res.send("Error: " + err);  // 何かエラーがあればエラーメッセージを返す
@@ -79,7 +78,7 @@ module.exports = (robot) => {
         });
     };
 
-    robot.respond('file', (res) => {  // ファイルがアップロードされたときの処理
+    robot.respond('file', (res) => {
         onfile(res, res.json);
     });
 };
