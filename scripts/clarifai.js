@@ -2,7 +2,7 @@ const Clarifai = require('clarifai');
 const axios = require('axios');
 
 const app = new Clarifai.App({
-    apiKey: '5654b2812fd44f61a85e7543a89faa27'  // ClarifaiのAPIキーを入力
+    apiKey: '5654b2812fd44f61a85e7543a89faa27'  // ClarifaiのAPIキー
 });
 
 module.exports = (robot) => {
@@ -30,7 +30,7 @@ module.exports = (robot) => {
             const response = await axios.get(imageUrl, { 
                 responseType: 'arraybuffer', 
                 headers: { 
-                    'Authorization': 'Bearer YOUR_ACCESS_TOKEN', 
+                    'Authorization': 'Bearer 5654b2812fd44f61a85e7543a89faa27', // ここを修正
                     'Accept': 'application/json' 
                 } 
             });
@@ -39,7 +39,7 @@ module.exports = (robot) => {
             const imageBytes = Buffer.from(response.data, 'binary').toString('base64');
 
             // 画像をClarifai APIで解析
-            const clarifaiResponse = await app.models.predict('dog-cat-model', { base64: imageBytes });
+            const clarifaiResponse = await app.models.predict('dog-catmodel', { base64: imageBytes });
             const concepts = clarifaiResponse.outputs[0].data.concepts;
 
             if (concepts.length > 0) {
