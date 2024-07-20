@@ -15,7 +15,7 @@ module.exports = (robot) => {
             stub.PostModelOutputs( // Clarifai APIの呼び出し
                 {
                     // This is the model ID of a publicly available General model. You may use any other public or custom model ID.
-                    model_id: "bicycle-motorcycle-model",  // 画像認識モデルのIDを指定
+                    model_id: "dog-catmodel",  // 画像認識モデルのIDを指定
                     inputs: [{ data: { image: { base64: imageBytes } } }]  // base64エンコードした画像データを入力として設定
                 },
                 metadata,
