@@ -1,6 +1,26 @@
 const Clarifai = require('clarifai');
 const axios = require('axios');
 
+// 画像のURLとアクセストークンを設定
+const imageUrl = 'https://api.direct4b.com/albero-app-server/files/-12Kax5oAsNWRZT/1t1OW3zTVvk?message_id=1584143806524030976';
+const token = '5654b2812fd44f61a85e7543a89faa27'; // 正しいトークンを使用
+
+// 画像データを取得するリクエスト
+axios.get(imageUrl, {
+    headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+    },
+    responseType: 'arraybuffer' // バイナリデータとしてレスポンスを処理
+})
+.then(response => {
+    console.log('Image data received');
+    // ここで画像データの処理を行う
+})
+.catch(error => {
+    console.error('Error during image processing:', error);
+});
+
 const app = new Clarifai.App({
     apiKey: '5654b2812fd44f61a85e7543a89faa27'  // ClarifaiのAPIキー
 });
