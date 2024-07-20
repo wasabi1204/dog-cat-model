@@ -9,6 +9,11 @@ metadata.set("authorization", "Key " + api_key);
 
 const threshold = 0.8;  // スコアのしきい値を設定
 
+const getRandomResponse = (responses) => {
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    return responses[randomIndex];
+};
+
 const onfile = (res, file) => {
     res.download(file, (path) => {
         const imageBytes = fs.readFileSync(path, { encoding: "base64" }); // ファイルを読み込んでbase64エンコード
@@ -30,19 +35,37 @@ const onfile = (res, file) => {
                 }
 
                 // スコアに基づいて感想を決定する
-                let result = "わかりません。この画像はなんですか？";
                 const concepts = response.outputs[0].data.concepts;
 
                 // Cat と Dog のスコアを取得
                 const catConcept = concepts.find(concept => concept.name === "cat");
                 const dogConcept = concepts.find(concept => concept.name === "dog");
 
+                let result;
+
                 if (catConcept && catConcept.value > threshold && (catConcept.value > (dogConcept ? dogConcept.value : 0))) {
-                    result = "可愛らしい猫ですね！";
+                    const catResponses = [
+                        "可愛らしい猫ですね！",
+                        "かっこいい猫ですね！",
+                        "猫は苦手です。"
+                    ];
+                    result = getRandomResponse(catResponses);
                 } else if (dogConcept && dogConcept.value > threshold && (dogConcept.value > (catConcept ? catConcept.value : 0))) {
-                    result = "かっこいい犬ですね！";
+                    const dogResponses = [
+                        "可愛らしい犬ですね！",
+                        "かっこいい犬ですね！",
+                        "犬は苦手です。"
+                    ];
+                    result = getRandomResponse(dogResponses);
+                } else {
+                    const otherResponses = [
+                        "これはなんですか？",
+                        "知らない画像です。",
+                        "わかりません。"
+                    ];
+                    result = getRandomResponse(otherResponses);
                 }
-                
+
                 res.send(result);
             }
         );
