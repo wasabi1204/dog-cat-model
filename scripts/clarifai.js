@@ -1,76 +1,47 @@
-const Clarifai = require('clarifai');
-const axios = require('axios');
 
-// 画像のURLとアクセストークンを設定
-const imageUrl = 'https://api.direct4b.com/albero-app-server/files/-12Kax5oAsNWRZT/1t1OW3zTVvk?message_id=1584143806524030976';
-const token = '5654b2812fd44f61a85e7543a89faa27'; // 正しいトークンを使用
+const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
+const fs = require("fs");
 
-// 画像データを取得するリクエスト
-axios.get(imageUrl, {
-    headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-    },
-    responseType: 'arraybuffer' // バイナリデータとしてレスポンスを処理
-})
-.then(response => {
-    console.log('Image data received');
-    // ここで画像データの処理を行う
-})
-.catch(error => {
-    console.error('Error during image processing:', error);
-});
+const stub = ClarifaiStub.grpc();
 
-const app = new Clarifai.App({
-    apiKey: '5654b2812fd44f61a85e7543a89faa27'  // ClarifaiのAPIキー
-});
+const metadata = new grpc.Metadata();
+const api_key = "5654b2812fd44f61a85e7543a89faa27";
+metadata.set("authorization", "Key " + api_key);
 
 module.exports = (robot) => {
-    robot.respond(/(.+)$/, async (res) => {
-        const message = res.message;
+    const onfile = (res, file) => {
+        res.download(file, (path) => {
+            const imageBytes = fs.readFileSync(path, { encoding: "base64" }); // ファイルを読み込んでbase64エンコード
+            stub.PostModelOutputs( // Clarifai APIの呼び出し
+                {
+                    // This is the model ID of a publicly available General model. You may use any other public or custom model ID.
+                    model_id: "dog-catmodel",  // 画像認識モデルのIDを指定
+                    inputs: [{ data: { image: { base64: imageBytes } } }]  // base64エンコードした画像データを入力として設定
+                },
+                metadata,
+                (err, response) => {  // コールバック関数
+                    if (err) {
+                        res.send("Error: " + err);  // 何かエラーがあればエラーメッセージを返す
+                        return;
+                    }
 
-        // メッセージのテキスト部分をJSONとしてパース
-        let attachment;
-        try {
-            attachment = JSON.parse(message.text.match(/\{.*\}/)[0]);
-        } catch (err) {
-            console.error('Failed to parse message text as JSON:', err);
-            res.send('画像の情報を解析できませんでした。');
-            return;
-        }
+                    if (response.status.code !== 10000) {  // ステータスコードが10000以外の場合はエラーメッセージを返す
+                        res.send("Received failed status: " + response.status.description + "\n" + response.status.details + "\n" + response.status.code);
+                        return;
+                    }
 
-        // 画像URLを取得
-        const imageUrl = attachment.url;
+                    //これ以降が正常な場合の処理
+                    result = "";
+                    for (const c of response.outputs[0].data.concepts) {
+                        result = result + (c.name + ": " + c.value + "\n");
+                    }
+                    res.send(result);
+                }
+            );
+        });
+    };
 
-        // デバッグ用に画像URLをログ出力
-        console.log('Image URL:', imageUrl);
-
-        try {
-            // 画像のダウンロード処理
-            const response = await axios.get(imageUrl, { 
-                responseType: 'arraybuffer', 
-                headers: { 
-                    'Authorization': 'Bearer 5654b2812fd44f61a85e7543a89faa27', // ここを修正
-                    'Accept': 'application/json' 
-                } 
-            });
-
-            // 画像データをBase64形式に変換
-            const imageBytes = Buffer.from(response.data, 'binary').toString('base64');
-
-            // 画像をClarifai APIで解析
-            const clarifaiResponse = await app.models.predict('dog-catmodel', { base64: imageBytes });
-            const concepts = clarifaiResponse.outputs[0].data.concepts;
-
-            if (concepts.length > 0) {
-                const topConcept = concepts[0].name;
-                res.send(`これは${topConcept}の画像ですね。`);
-            } else {
-                res.send('画像の内容を認識できませんでした。');
-            }
-        } catch (err) {
-            console.error('Error during image processing:', err);
-            res.send('画像の解析に失敗しました。');
-        }
+    robot.respond('file', (res) => {  // ファイルがアップロードされたときの処理
+        onfile(res, res.json);
     });
 };
