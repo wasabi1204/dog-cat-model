@@ -27,11 +27,19 @@ module.exports = (robot) => {
 
         try {
             // 画像のダウンロード処理
-            const response = await axios.get(imageUrl, { responseType: 'arraybuffer', headers: { 'Authorization': 'Bearer YOUR_ACCESS_TOKEN' } });
+            const response = await axios.get(imageUrl, { 
+                responseType: 'arraybuffer', 
+                headers: { 
+                    'Authorization': 'Bearer YOUR_ACCESS_TOKEN', 
+                    'Accept': 'application/json' 
+                } 
+            });
+
+            // 画像データをBase64形式に変換
             const imageBytes = Buffer.from(response.data, 'binary').toString('base64');
 
             // 画像をClarifai APIで解析
-            const clarifaiResponse = await app.models.predict("dog-catmodel", { base64: imageBytes });
+            const clarifaiResponse = await app.models.predict('dog-cat-model', { base64: imageBytes });
             const concepts = clarifaiResponse.outputs[0].data.concepts;
 
             if (concepts.length > 0) {
