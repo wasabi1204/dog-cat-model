@@ -30,7 +30,7 @@ const onfile = (res, file) => {
                 }
 
                 // スコアに基づいて感想を決定する
-                let result = "わからない";
+                let result = "わかりません。この画像はなんですか？";
                 const concepts = response.outputs[0].data.concepts;
 
                 // Cat と Dog のスコアを取得
@@ -38,9 +38,9 @@ const onfile = (res, file) => {
                 const dogConcept = concepts.find(concept => concept.name === "dog");
 
                 if (catConcept && catConcept.value > threshold && (catConcept.value > (dogConcept ? dogConcept.value : 0))) {
-                    result = "猫";
+                    result = "可愛らしい猫ですね！";
                 } else if (dogConcept && dogConcept.value > threshold && (dogConcept.value > (catConcept ? catConcept.value : 0))) {
-                    result = "犬";
+                    result = "かっこいい犬ですね！";
                 }
                 
                 res.send(result);
