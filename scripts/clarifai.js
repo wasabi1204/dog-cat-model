@@ -27,7 +27,7 @@ module.exports = (robot) => {
 
         try {
             // 画像のダウンロード処理
-            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            const response = await axios.get(imageUrl, { responseType: 'arraybuffer', headers: { 'Authorization': 'Bearer YOUR_ACCESS_TOKEN' } });
             const imageBytes = Buffer.from(response.data, 'binary').toString('base64');
 
             // 画像をClarifai APIで解析
