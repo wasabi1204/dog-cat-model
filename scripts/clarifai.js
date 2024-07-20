@@ -1,3 +1,4 @@
+
 const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
 const fs = require("fs");
 
@@ -13,7 +14,8 @@ module.exports = (robot) => {
             const imageBytes = fs.readFileSync(path, { encoding: "base64" }); // ファイルを読み込んでbase64エンコード
             stub.PostModelOutputs( // Clarifai APIの呼び出し
                 {
-                    model_id: "dog-catmodel",  // 画像認識モデルのIDを指定
+                    // This is the model ID of a publicly available General model. You may use any other public or custom model ID.
+                    model_id: "bicycle-motorcycle-model",  // 画像認識モデルのIDを指定
                     inputs: [{ data: { image: { base64: imageBytes } } }]  // base64エンコードした画像データを入力として設定
                 },
                 metadata,
@@ -28,26 +30,12 @@ module.exports = (robot) => {
                         return;
                     }
 
-                    // 判別結果を取得
-                    const concepts = response.outputs[0].data.concepts;
-                    const cat = concepts.find(c => c.name === 'cat');
-                    const dog = concepts.find(c => c.name === 'dog');
-
-                    let result = "わからない";  // デフォルトの結果は「わからない」
-
-                    if (cat && dog) {
-                        if (cat.value > dog.value) {
-                            result = "猫";
-                        } else if (dog.value > cat.value) {
-                            result = "犬";
-                        }
-                    } else if (cat) {
-                        result = "猫";
-                    } else if (dog) {
-                        result = "犬";
+                    //これ以降が正常な場合の処理
+                    result = "";
+                    for (const c of response.outputs[0].data.concepts) {
+                        result = result + (c.name + ": " + c.value + "\n");
                     }
-
-                    res.send(result);  // 判別結果をレスポンスとして返す
+                    res.send(result);
                 }
             );
         });
